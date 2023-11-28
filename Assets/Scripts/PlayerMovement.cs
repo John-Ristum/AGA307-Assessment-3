@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : Singleton<PlayerMovement>
 {
     public CharacterController controller;
     public Transform cam;
@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask groundMask;
 
     private Vector3 velocity;
+    public Vector3 moveDir;
     public bool isGrounded;
 
     //For finding nearest object
@@ -25,6 +26,11 @@ public class PlayerMovement : MonoBehaviour
     float distance;
     float nearestDistance = 1000000;
 
+    //temp
+    public bool isQuickStep;
+    bool isLocked;
+    float angle = 0;
+    public Vector3 direction = new Vector3(1f, 0f, 1f);
 
     private void Start()
     {
@@ -52,16 +58,24 @@ public class PlayerMovement : MonoBehaviour
             LockEnemyOff();
 
         //Move the player
-        Vector3 direction = new Vector3(x, 0f, z).normalized;
+        direction = new Vector3(x, 0f, z).normalized;
 
         if (direction.magnitude >= 0.1f)
         {
             float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            //transform.rotation = Quaternion.Euler(0f, angle, 0f);
-            transform.LookAt(new Vector3(target.position.z, transform.position.y, target.position.z));
+            if(!isLocked)
+                angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            if (isQuickStep)
+                return;
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+
+            //Vector3 test = new Vector3(target.transform.position.z - transform.position.z, 0, target.transform.position.x - transform.position.x);
+            //transform.LookAt(new Vector3(target.position.z, transform.position.y, target.position.z));
+            //transform.rotation = Quaternion.LookRotation(test);
+            //transform.rotation = Quaternion.LookRotation(new Vector3(target.transform.position.z - transform.position.z, 0, target.transform.position.x - transform.position.x));
+
+            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             controller.Move(moveDir.normalized * speed * Time.deltaTime);
         }
 
@@ -72,6 +86,7 @@ public class PlayerMovement : MonoBehaviour
 
     void LockEnemyOn()
     {
+        isLocked = true;
         //Find nearest object
         AllObjects = GameObject.FindGameObjectsWithTag("Enemy");
 
@@ -91,6 +106,7 @@ public class PlayerMovement : MonoBehaviour
 
     void LockEnemyOff()
     {
+        isLocked = false;
         target = NearestOBJ.transform;
         nearestDistance = 1000000;
         AllObjects = null;
