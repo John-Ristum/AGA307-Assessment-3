@@ -51,21 +51,25 @@ public class QuickStep : GameBehaviour
     public float dashTime = 0.25f;
     float startTime;
 
+    public GameObject playerModel;
+
     private void Update()
     {
         if (Input.GetButtonDown("QuickStep"))
-            StartCoroutine(Dash());
+            StartCoroutine(QuickStepCo());
 
         //if (Time.time >= startTime + dashTime)
             //_PLAYER.playerState = PlayerState.Idle;
     }
 
-    IEnumerator Dash()
+    IEnumerator QuickStepCo()
     {
-        if (_PLAYER.playerState == PlayerState.QuickStepping)
+        if (_PLAYER.actionState == PlayerActionState.QuickStepping)
             yield break;
 
-        _PLAYER.playerState = PlayerState.QuickStepping;
+        _PLAYER.actionState = PlayerActionState.QuickStepping;
+
+        _PLAYER.anim.SetTrigger("QuickStep");
 
         Vector3 dashDir;
         if (_PLAYER.direction.magnitude >= 0.1f)
@@ -83,8 +87,10 @@ public class QuickStep : GameBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(0.1f);
 
-        _PLAYER.playerState = PlayerState.Idle;
+        playerModel.transform.position = new Vector3(transform.position.x, playerModel.transform.position.y, transform.position.z);
+        yield return new WaitForSeconds(0.5f);
+
+        _PLAYER.actionState = PlayerActionState.Idle;
     }
 }
